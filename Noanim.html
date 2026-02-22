@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Volleyball Legends Reroll Simulator 🏐 (No Animations)</title>
+
+<style>
+body{
+    margin:0;
+    font-family:Arial;
+    background:#111;
+    color:white;
+    display:flex;
+}
+
+.main{
+    flex:1;
+    text-align:center;
+    padding:20px;
+}
+
+.reset-btn{
+    position:absolute;
+    top:15px;
+    left:15px;
+    padding:18px 35px;
+    font-size:20px;
+    font-weight:bold;
+    background:#ff2d2d;
+    border:none;
+    color:white;
+    border-radius:12px;
+    cursor:pointer;
+    box-shadow:0 0 15px red;
+}
+
+.slot{
+    margin:30px auto;
+    width:320px;
+    height:200px;
+    border-radius:15px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:30px;
+    font-weight:bold;
+}
+
+.common{background:#2ecc71;}
+.rare{background:#3498db;}
+.legendary{background:#e74c3c;}
+.godly{background:#f1c40f;color:black;}
+.secret{background:#8e44ad;}
+.ultra{
+    background:linear-gradient(45deg,red,orange,yellow,green,blue,purple);
+    color:white;
+}
+
+.spin-row{
+    display:flex;
+    justify-content:center;
+    gap:20px;
+    flex-wrap:wrap;
+}
+
+.section{
+    background:#222;
+    padding:15px;
+    border-radius:12px;
+}
+
+button{
+    padding:12px 20px;
+    font-size:16px;
+    margin:5px;
+    border:none;
+    border-radius:8px;
+    cursor:pointer;
+}
+
+.stop-btn{
+    background:#ff4444;
+    color:white;
+}
+
+.rates-panel{
+    width:340px;
+    background:#1b1b1b;
+    padding:15px;
+    overflow-y:auto;
+}
+
+.rate-box{
+    padding:10px;
+    border-radius:8px;
+    margin-bottom:8px;
+    cursor:pointer;
+}
+
+.rate-list{
+    display:none;
+    margin-top:5px;
+    font-size:14px;
+}
+
+/* ให้ Ultra ในเมนู Rates เป็นสีรุ้งด้วย */
+.rate-box.ultra{
+    background:linear-gradient(45deg,red,orange,yellow,green,blue,purple);
+    color:white;
+}
+</style>
+</head>
+
+<body>
+
+<button class="reset-btn" onclick="resetAll()">RESET</button>
+
+<div class="main">
+
+<h1>Volleyball Legends Reroll Simulator 🏐 (No Animations)</h1>
+
+<div class="slot" id="slot">?</div>
+
+<h2>Spins: <span id="counter">0</span></h2>
+
+<div class="spin-row">
+
+<div class="section">
+<h3>Normal</h3>
+<button onclick="spin(false)">Normal Spin</button><br>
+<select id="normalTarget">
+<option>Common</option>
+<option>Rare</option>
+<option>Legendary</option>
+<option>Godly</option>
+<option>Secret</option>
+<option>Ultra</option>
+</select>
+<button onclick="spinUntil(false)">Spin Until</button>
+<button class="stop-btn" onclick="stopSpin()">STOP</button>
+</div>
+
+<div class="section">
+<h3>Lucky</h3>
+<button onclick="spin(true)">Lucky Spin</button><br>
+<select id="luckyTarget">
+<option>Rare</option>
+<option>Legendary</option>
+<option>Godly</option>
+<option>Secret</option>
+<option>Ultra</option>
+</select>
+<button onclick="spinUntil(true)">Spin Until</button>
+<button class="stop-btn" onclick="stopSpin()">STOP</button>
+</div>
+
+</div>
+</div>
+
+<div class="rates-panel">
+
+<div style="display:flex; gap:10px; margin-bottom:15px;">
+<button onclick="openRates('normal')" style="flex:1;">Normal Rates</button>
+<button onclick="openRates('lucky')" style="flex:1;">Lucky Rates</button>
+</div>
+
+<div id="normalRates"></div>
+<div id="luckyRates" style="display:none;"></div>
+
+</div>
+
+<script>
+
+let counter=0;
+let stopFlag=false;
+
+const rates={
+normal:{Common:62.5,Rare:35,Legendary:2,Godly:0.47,Secret:0.02,Ultra:0.01},
+lucky:{Rare:50,Legendary:45,Godly:3.5,Secret:1,Ultra:0.5}
+};
+
+const data={
+Common:["Hinto","Tonkura","Hakochi","Kishoti","Sagumi","Yachikusai"],
+Rare:["Ninyoku","Tsuchiro","Oyatsu","Imaezi"],
+Legendary:["Uchikai","Kyoshin","Sazuroku","Azmei","Yokai","Kozei","Yomomute"],
+Godly:["Kyamo","Bakuri","Okazu","Hirakumi"],
+Secret:["Sanju","Timeskip Hinto","Timeskip Kyamo","The Twins","Kisuki","Timeskip Okazu","Taichou","Kazana","Mikage","Jinko","Yogan"],
+Ultra:["Hakka","Akali","Ronin"]
+};
+
+function getRandom(arr){
+return arr[Math.floor(Math.random()*arr.length)];
+}
+
+function roll(lucky){
+let r=Math.random()*100;
+let table=lucky?rates.lucky:rates.normal;
+let sum=0;
+for(let rarity in table){
+sum+=table[rarity];
+if(r<sum) return rarity;
+}
+return "Ultra";
+}
+
+function showResult(rarity,char){
+let slot=document.getElementById("slot");
+slot.className="slot "+rarity.toLowerCase();
+slot.innerHTML=char;
+}
+
+function spin(lucky){
+counter++;
+let rarity=roll(lucky);
+let char=getRandom(data[rarity]);
+showResult(rarity,char);
+document.getElementById("counter").innerText=counter;
+}
+
+function spinUntil(lucky){
+stopFlag=false;
+
+let target=lucky?
+document.getElementById("luckyTarget").value:
+document.getElementById("normalTarget").value;
+
+while(true){
+if(stopFlag) return;
+
+counter++;
+let rarity=roll(lucky);
+let char=getRandom(data[rarity]);
+
+if(rarity===target){
+showResult(rarity,char);
+document.getElementById("counter").innerText=counter;
+break;
+}
+}
+}
+
+function stopSpin(){
+stopFlag=true;
+}
+
+function resetAll(){
+stopFlag=true;
+counter=0;
+document.getElementById("counter").innerText=0;
+document.getElementById("slot").innerHTML="?";
+document.getElementById("slot").className="slot";
+}
+
+function openRates(type){
+document.getElementById("normalRates").style.display =
+type==="normal"?"block":"none";
+document.getElementById("luckyRates").style.display =
+type==="lucky"?"block":"none";
+}
+
+function generateRates(container,type){
+container.innerHTML="";
+let table=rates[type];
+for(let rarity in table){
+let box=document.createElement("div");
+box.className="rate-box "+rarity.toLowerCase();
+box.innerHTML="<b>"+rarity+" ("+table[rarity]+"%)</b><div class='rate-list'></div>";
+box.onclick=function(){
+let list=box.querySelector(".rate-list");
+if(list.style.display==="block"){
+list.style.display="none";
+}else{
+list.innerHTML=data[rarity].join("<br>");
+list.style.display="block";
+}
+};
+container.appendChild(box);
+}
+}
+
+generateRates(document.getElementById("normalRates"),"normal");
+generateRates(document.getElementById("luckyRates"),"lucky");
+
+</script>
+
+</body>
+</html>
